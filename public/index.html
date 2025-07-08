@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banking Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .login-form, .banking-actions {
+            display: none;
+        }
+        
+        .login-form.active, .banking-actions.active {
+            display: block;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .primary-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .primary-btn:hover {
+            background-color: #45a049;
+        }
+        
+        .secondary-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .secondary-btn:hover {
+            background-color: #1976D2;
+        }
+        
+        .danger-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .danger-btn:hover {
+            background-color: #d32f2f;
+        }
+        
+        .balance-display {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            color: #4CAF50;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .user-info {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #666;
+        }
+        
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏦 Banking Demo</h1>
+        
+        <div id="loginForm" class="login-form active">
+            <input type="text" id="username" placeholder="Username (try: john_doe)" value="john_doe">
+            <input type="password" id="password" placeholder="Password (try: password123)" value="password123">
+            <button class="primary-btn" onclick="login()">Login</button>
+        </div>
+        
+        <div id="bankingActions" class="banking-actions">
+            <div class="user-info">
+                Welcome, <span id="userName"></span>!
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label for="accountSelect" style="display: block; margin-bottom: 5px; font-weight: bold;">View Account Balance:</label>
+                <select id="accountSelect" onchange="checkBalance()" style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; box-sizing: border-box;">
+                    <option value="checking">🏦 Checking Account</option>
+                    <option value="savings">💰 Savings Account</option>
+                    <option value="investments">📈 Investment Account</option>
+                    <option value="emergency">🚨 Emergency Fund</option>
+                </select>
+            </div>
+            
+            <div class="balance-display" id="balanceDisplay">
+                Checking Account Balance: $0.00
+            </div>
+            
+            <input type="number" id="transferAmount" placeholder="Transfer amount" step="0.01">
+            
+            <label for="toAccount" style="display: block; margin-bottom: 5px; font-weight: bold; margin-top: 15px;">Transfer To:</label>
+            <select id="toAccount" style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; box-sizing: border-box;">
+                <option value="">Select destination account...</option>
+                <option value="checking">🏦 Checking Account</option>
+                <option value="savings">💰 Savings Account</option>
+                <option value="investments">📈 Investment Account</option>
+                <option value="emergency">🚨 Emergency Fund</option>
+            </select>
+            <button class="secondary-btn" onclick="transfer()">Transfer Money</button>
+            
+            <button class="primary-btn" onclick="checkBalance()">Check Balance</button>
+            <button class="danger-btn" onclick="logout()">Logout</button>
+        </div>
+        
+        <div id="message"></div>
+    </div>
+
+    <script>
+        let sessionId = null;
+        let currentUser = null;
+
+        function showMessage(text, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => messageDiv.innerHTML = '', 5000);
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showMessage('Please enter username and password', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    sessionId = data.sessionId;
+                    currentUser = data.user;
+                    
+                    document.getElementById('loginForm').classList.remove('active');
+            document.getElementById('bankingActions').classList.add('active');
+            document.getElementById('userName').textContent = currentUser.name;
+            
+            // Display checking account balance by default
+            const checkingBalance = currentUser.accounts.checking.balance;
+            document.getElementById('balanceDisplay').textContent = `Checking Account Balance: $${checkingBalance.toFixed(2)}`;
+                    
+                    showMessage('Login successful!');
+                } else {
+                    showMessage(data.error || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error during login', 'error');
+            }
+        }
+
+        async function transfer() {
+    const amount = parseFloat(document.getElementById('transferAmount').value);
+    const toAccount = document.getElementById('toAccount').value;
+    const fromAccount = 'checking'; // Default to checking account for transfers
+    
+    if (!amount || amount <= 0) {
+        showMessage('Please enter a valid amount', 'error');
+        return;
+    }
+    
+    if (!toAccount) {
+        showMessage('Please select a destination account', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/transfer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Session-Id': sessionId
+            },
+            body: JSON.stringify({ amount, toAccount, fromAccount })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Update the current view if it's showing the checking account
+            const selectedAccount = document.getElementById('accountSelect').value;
+            if (selectedAccount === 'checking') {
+                document.getElementById('balanceDisplay').textContent = `Checking Account Balance: $${data.newBalance.toFixed(2)}`;
+            }
+            
+            document.getElementById('transferAmount').value = '';
+            document.getElementById('toAccount').value = '';
+            
+            const toAccountName = data.toAccountName || toAccount;
+            showMessage(`Transfer of $${amount.toFixed(2)} to ${toAccountName} successful!`);
+        } else {
+            showMessage(data.error || 'Transfer failed', 'error');
+        }
+    } catch (error) {
+        showMessage('Network error during transfer', 'error');
+    }
+}
+
+        async function checkBalance() {
+            const selectedAccount = document.getElementById('accountSelect').value;
+    
+            try {
+                const response = await fetch(`/balance?account=${selectedAccount}`, {
+                    headers: {
+                        'X-Session-Id': sessionId
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const accountName = data.accountName || (selectedAccount.charAt(0).toUpperCase() + selectedAccount.slice(1) + ' Account');
+                    document.getElementById('balanceDisplay').textContent = `${accountName} Balance: $${data.balance.toFixed(2)}`;
+                    showMessage('Balance updated!');
+                } else {
+                    showMessage(data.error || 'Failed to get balance', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error during balance check', 'error');
+            }
+        }
+
+        async function logout() {
+            try {
+                const response = await fetch('/logout', {
+                    method: 'POST',
+                    headers: {
+                        'X-Session-Id': sessionId
+                    }
+                });
+
+                if (response.ok) {
+                    sessionId = null;
+                    currentUser = null;
+                    
+                    document.getElementById('bankingActions').classList.remove('active');
+                    document.getElementById('loginForm').classList.add('active');
+                    document.getElementById('username').value = 'john_doe';
+                    document.getElementById('password').value = 'password123';
+                    
+                    showMessage('Logged out successfully!');
+                } else {
+                    showMessage('Logout failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error during logout', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

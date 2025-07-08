@@ -1,0 +1,185 @@
+<form version="1.1">
+  <label>Banking Demo - Observability Dashboard</label>
+  <description>Monitor banking application telemetry - comparing messy vs clean implementations</description>
+  
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_picker">
+      <label>Time Range</label>
+      <default>
+        <earliest>-15m@m</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  
+  <row>
+    <panel>
+      <title>Application Health Overview</title>
+      <single>
+        <search>
+          <query>
+            index=main source="banking-demo" 
+            | stats count as total_events
+          </query>
+          <earliest>$time_picker.earliest$</earliest>
+          <latest>$time_picker.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="rangeColors">["0x65A637","0x6DB7C6","0xF7BC38","0xF58F39","0xD93F3C"]</option>
+        <option name="rangeValues">[0,30,70,100]</option>
+        <option name="underLabel">Total Events</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Active Users</title>
+      <single>
+        <search>
+          <query>
+            index=main source="banking-demo" event_type="*LOGIN*"
+            | stats dc(user_id) as unique_users
+          </query>
+          <earliest>$time_picker.earliest$</earliest>
+          <latest>$time_picker.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="underLabel">Unique Users</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Transaction Volume</title>
+      <single>
+        <search>
+          <query>
+            index=main source="banking-demo" event_type="*TRANSFER*"
+            | stats count as transfers
+          </query>
+          <earliest>$time_picker.earliest$</earliest>
+          <latest>$time_picker.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="underLabel">Transfers</option>
+      </single>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Banking Operations Timeline</title>
+      <viz type="timeline_app.timeline">
+        <search>
+          <query>
+            index=main source="banking-demo"
+            | eval operation=case(
+                match(event_type, "LOGIN"), "Login",
+                match(event_type, "LOGOUT"), "Logout", 
+                match(event_type, "TRANSFER"), "Transfer",
+                match(event_type, "BALANCE"), "Balance Check",
+                1=1, "Other"
+            )
+            | timechart span=1m count by operation
+          </query>
+          <earliest>$time_picker.earliest$</earliest>
+          <latest>$time_picker.latest$</latest>
+        </search>
+      </viz>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Messy Logging Analysis</title>
+      <table>
+        <search>
+          <query>
+            index=main source="banking-demo"
+            | eval log_source=case(
+                match(_raw, "WINSTON"), "Winston Logger",
+                match(_raw, "CUSTOM-SPLUNK"), "Custom Splunk",
+                match(_raw, "AUDIT"), "Audit Logger",
+                match(_raw, "bunyan"), "Bunyan Logger",
+                1=1, "Other"
+            )
+            | stats count by log_source, event_type
+            | sort -count
+          </query>
+          <earliest>$time_picker.earliest$</earliest>
+          <latest>$time_picker.latest$</latest>
+        </search>
+        <option name="drilldown">cell</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+    
+    <panel>
+      <title>User Activity Breakdown</title>
+      <chart>
+        <search>
+          <query>
+            index=main source="banking-demo" user_id!="unknown"
+            | stats count by user_id, event_type
+            | xyseries user_id event_type count
+            | fillnull value=0
+          </query>
+          <earliest>$time_picker.earliest$</earliest>
+          <latest>$time_picker.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Raw Event Stream (Latest 50)</title>
+      <table>
+        <search>
+          <query>
+            index=main source="banking-demo"
+            | head 50
+            | table _time, event_type, user_id, data
+            | sort -_time
+          </query>
+          <earliest>$time_picker.earliest$</earliest>
+          <latest>$time_picker.latest$</latest>
+        </search>
+        <option name="drilldown">cell</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">true</option>
+      </table>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Log Noise Analysis</title>
+      <chart>
+        <search>
+          <query>
+            index=main source="banking-demo"
+            | bin _time span=1m
+            | stats count by _time
+            | eval noise_level=case(
+                count > 20, "High Noise",
+                count > 10, "Medium Noise", 
+                count > 5, "Low Noise",
+                1=1, "Minimal"
+            )
+            | timechart span=1m count by noise_level
+          </query>
+          <earliest>$time_picker.earliest$</earliest>
+          <latest>$time_picker.latest$</latest>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+  </row>
+</form>

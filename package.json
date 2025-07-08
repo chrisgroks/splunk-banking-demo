@@ -1,0 +1,24 @@
+{
+  "name": "banking-demo",
+  "version": "1.0.0",
+  "description": "Demo banking app showing Splunk vs OpenTelemetry monitoring",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "demo": "node server.js"
+  },
+  "dependencies": {
+    "bunyan": "^1.8.15",
+    "dotenv": "^17.0.1",
+    "express": "^4.18.2",
+    "winston": "^3.10.0"
+  },
+  "keywords": [
+    "banking",
+    "demo",
+    "splunk",
+    "opentelemetry"
+  ],
+  "author": "Demo",
+  "license": "MIT"
+}

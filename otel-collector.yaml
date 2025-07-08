@@ -1,0 +1,71 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+  
+  resource:
+    attributes:
+      - key: service.name
+        value: banking-demo
+        action: upsert
+      - key: service.version
+        value: 1.0.0
+        action: upsert
+      - key: deployment.environment
+        value: demo
+        action: upsert
+
+exporters:
+  # Console exporter for debugging
+  logging:
+    loglevel: debug
+  
+  # Splunk HEC exporter - configure with your Splunk Cloud details
+  splunk_hec:
+    # Replace with your Splunk Cloud HEC endpoint
+    endpoint: "${SPLUNK_HEC_ENDPOINT}"
+    token: "${SPLUNK_HEC_TOKEN}"
+    source: "banking-demo-otel"
+    sourcetype: "otel"
+    index: "banking"
+    max_idle_conns: 200
+    disable_compression: false
+    timeout: 10s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+
+  # Alternative: Jaeger for trace visualization during development
+  jaeger:
+    endpoint: http://localhost:14250
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [resource, batch]
+      exporters: [logging, splunk_hec]
+    
+    metrics:
+      receivers: [otlp]
+      processors: [resource, batch]
+      exporters: [logging, splunk_hec]
+    
+    logs:
+      receivers: [otlp]
+      processors: [resource, batch]
+      exporters: [logging, splunk_hec]
+
+  extensions: []

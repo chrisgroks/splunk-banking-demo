@@ -1,0 +1,78 @@
+{
+  "users": {
+    "john_doe": {
+      "id": "john_doe",
+      "name": "John Doe",
+      "password": "password123",
+      "accounts": {
+        "checking": {
+          "accountNumber": "ACC-001",
+          "balance": 0,
+          "type": "checking",
+          "displayName": "Checking Account"
+        },
+        "savings": {
+          "accountNumber": "ACC-002",
+          "balance": 6000,
+          "type": "savings",
+          "displayName": "Savings Account"
+        },
+        "investments": {
+          "accountNumber": "ACC-003",
+          "balance": 13500,
+          "type": "investments",
+          "displayName": "Investment Account"
+        },
+        "emergency": {
+          "accountNumber": "ACC-004",
+          "balance": 1500,
+          "type": "emergency",
+          "displayName": "Emergency Fund"
+        }
+      }
+    }
+  },
+  "sessions": {
+    "session_1751910181282_0.5656464321138117": {
+      "userId": "john_doe",
+      "createdAt": "2025-07-07T17:43:01.282Z"
+    },
+    "session_1751910653478_0.360509896580526": {
+      "userId": "john_doe",
+      "createdAt": "2025-07-07T17:50:53.478Z"
+    },
+    "session_1752003966028_0.8831570242545492": {
+      "userId": "john_doe",
+      "createdAt": "2025-07-08T19:46:06.028Z"
+    }
+  },
+  "transactions": [
+    {
+      "id": "txn_1751910675245",
+      "from": "checking",
+      "to": "savings",
+      "userId": "john_doe",
+      "amount": 1000,
+      "timestamp": "2025-07-07T17:51:15.245Z",
+      "correlationId": "john_doe-1751910675241-0.5179247880318405"
+    },
+    {
+      "id": "txn_1751911210177",
+      "from": "checking",
+      "to": "investments",
+      "userId": "john_doe",
+      "amount": 1000,
+      "timestamp": "2025-07-07T18:00:10.177Z",
+      "correlationId": "john_doe-1751911210175-0.5293689405794464"
+    },
+    {
+      "id": "txn_1751911216877",
+      "from": "checking",
+      "to": "emergency",
+      "userId": "john_doe",
+      "amount": 500,
+      "timestamp": "2025-07-07T18:00:16.877Z",
+      "correlationId": "john_doe-1751911216875-0.07446733049955823"
+    }
+  ]
+}
