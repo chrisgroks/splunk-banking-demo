@@ -7,13 +7,13 @@
       "accounts": {
         "checking": {
           "accountNumber": "ACC-001",
-          "balance": 0,
+          "balance": 1,
           "type": "checking",
           "displayName": "Checking Account"
         },
         "savings": {
           "accountNumber": "ACC-002",
-          "balance": 6000,
+          "balance": 5999,
           "type": "savings",
           "displayName": "Savings Account"
         },
@@ -44,6 +44,14 @@
     "session_1752003966028_0.8831570242545492": {
       "userId": "john_doe",
       "createdAt": "2025-07-08T19:46:06.028Z"
+    },
+    "session_1752012755974_0.8574229356606797": {
+      "userId": "john_doe",
+      "createdAt": "2025-07-08T22:12:35.974Z"
+    },
+    "session_1752013072361_0.7018776431228684": {
+      "userId": "john_doe",
+      "createdAt": "2025-07-08T22:17:52.361Z"
     }
   },
   "transactions": [
@@ -73,6 +81,24 @@
       "amount": 500,
       "timestamp": "2025-07-07T18:00:16.877Z",
       "correlationId": "john_doe-1751911216875-0.07446733049955823"
+    },
+    {
+      "id": "txn_1752012839939",
+      "from": "savings",
+      "to": "checking",
+      "userId": "john_doe",
+      "amount": 1000,
+      "timestamp": "2025-07-08T22:13:59.939Z",
+      "correlationId": "john_doe-1752012839937-0.779933589647217"
+    },
+    {
+      "id": "txn_1752013100435",
+      "from": "checking",
+      "to": "savings",
+      "userId": "john_doe",
+      "amount": 999,
+      "timestamp": "2025-07-08T22:18:20.435Z",
+      "correlationId": "john_doe-1752013100433-0.2268688722659029"
     }
   ]
 }

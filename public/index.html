@@ -155,19 +155,44 @@
                 Checking Account Balance: $0.00
             </div>
             
-            <input type="number" id="transferAmount" placeholder="Transfer amount" step="0.01">
+            <button class="primary-btn" onclick="checkBalance()" style="margin-bottom: 20px;">🔄 Refresh Balance</button>
             
-            <label for="toAccount" style="display: block; margin-bottom: 5px; font-weight: bold; margin-top: 15px;">Transfer To:</label>
-            <select id="toAccount" style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; box-sizing: border-box;">
-                <option value="">Select destination account...</option>
-                <option value="checking">🏦 Checking Account</option>
-                <option value="savings">💰 Savings Account</option>
-                <option value="investments">📈 Investment Account</option>
-                <option value="emergency">🚨 Emergency Fund</option>
-            </select>
-            <button class="secondary-btn" onclick="transfer()">Transfer Money</button>
-            
-            <button class="primary-btn" onclick="checkBalance()">Check Balance</button>
+            <!-- Transfer Section -->
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e9ecef;">
+                <h3 style="margin: 0 0 15px 0; color: #495057; font-size: 18px;">💸 Transfer Money</h3>
+                
+                <label for="transferAmount" style="display: block; margin-bottom: 5px; font-weight: bold;">Amount to Transfer:</label>
+                <input type="number" id="transferAmount" placeholder="Enter amount (e.g., 100.00)" step="0.01" style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; box-sizing: border-box;">
+                
+                <div style="display: flex; gap: 15px; margin: 15px 0;">
+                    <div style="flex: 1;">
+                        <label for="fromAccount" style="display: block; margin-bottom: 5px; font-weight: bold;">From Account:</label>
+                        <select id="fromAccount" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; box-sizing: border-box;">
+                            <option value="checking">🏦 Checking Account</option>
+                            <option value="savings">💰 Savings Account</option>
+                            <option value="investments">📈 Investment Account</option>
+                            <option value="emergency">🚨 Emergency Fund</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; padding-top: 25px;">
+                        <span style="font-size: 24px; color: #6c757d;">→</span>
+                    </div>
+                    
+                    <div style="flex: 1;">
+                        <label for="toAccount" style="display: block; margin-bottom: 5px; font-weight: bold;">To Account:</label>
+                        <select id="toAccount" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; box-sizing: border-box;">
+                            <option value="">Select destination...</option>
+                            <option value="checking">🏦 Checking Account</option>
+                            <option value="savings">💰 Savings Account</option>
+                            <option value="investments">📈 Investment Account</option>
+                            <option value="emergency">🚨 Emergency Fund</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button class="secondary-btn" onclick="transfer()" style="width: 100%; margin-top: 10px; font-size: 16px; padding: 14px;">💸 Transfer Money</button>
+            </div>
             <button class="danger-btn" onclick="logout()">Logout</button>
         </div>
         
@@ -228,7 +253,7 @@
         async function transfer() {
     const amount = parseFloat(document.getElementById('transferAmount').value);
     const toAccount = document.getElementById('toAccount').value;
-    const fromAccount = 'checking'; // Default to checking account for transfers
+    const fromAccount = document.getElementById('fromAccount').value;
     
     if (!amount || amount <= 0) {
         showMessage('Please enter a valid amount', 'error');
@@ -237,6 +262,11 @@
     
     if (!toAccount) {
         showMessage('Please select a destination account', 'error');
+        return;
+    }
+    
+    if (fromAccount === toAccount) {
+        showMessage('Cannot transfer to the same account', 'error');
         return;
     }
 
