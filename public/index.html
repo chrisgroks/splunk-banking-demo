@@ -193,6 +193,41 @@
                 
                 <button class="secondary-btn" onclick="transfer()" style="width: 100%; margin-top: 10px; font-size: 16px; padding: 14px;">💸 Transfer Money</button>
             </div>
+
+            <!-- Transaction History Section -->
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e9ecef;">
+                <h3 style="margin: 0 0 15px 0; color: #495057; font-size: 18px;">📊 Transaction History</h3>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <label for="filterAccount" style="display: block; margin-bottom: 5px; font-weight: bold;">Filter by Account:</label>
+                        <select id="filterAccount" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px;">
+                            <option value="">All Accounts</option>
+                            <option value="checking">🏦 Checking Account</option>
+                            <option value="savings">💰 Savings Account</option>
+                            <option value="investments">📈 Investment Account</option>
+                            <option value="emergency">🚨 Emergency Fund</option>
+                        </select>
+                    </div>
+                    
+                    <div style="flex: 1;">
+                        <label for="filterStartDate" style="display: block; margin-bottom: 5px; font-weight: bold;">Start Date:</label>
+                        <input type="date" id="filterStartDate" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px;">
+                    </div>
+                    
+                    <div style="flex: 1;">
+                        <label for="filterEndDate" style="display: block; margin-bottom: 5px; font-weight: bold;">End Date:</label>
+                        <input type="date" id="filterEndDate" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px;">
+                    </div>
+                </div>
+                
+                <button class="secondary-btn" onclick="loadTransactionHistory()" style="width: 100%; margin-bottom: 15px; font-size: 14px; padding: 10px;">🔄 Refresh Transactions</button>
+                
+                <div id="transactionHistoryContainer" style="overflow-x: auto; max-height: 400px; overflow-y: auto;">
+                    <p style="text-align: center; color: #6c757d; padding: 20px;">Loading transactions...</p>
+                </div>
+            </div>
+
             <button class="danger-btn" onclick="logout()">Logout</button>
         </div>
         
@@ -240,6 +275,8 @@
             // Display checking account balance by default
             const checkingBalance = currentUser.accounts.checking.balance;
             document.getElementById('balanceDisplay').textContent = `Checking Account Balance: $${checkingBalance.toFixed(2)}`;
+                    
+                    loadTransactionHistory();
                     
                     showMessage('Login successful!');
                 } else {
@@ -292,6 +329,8 @@
             document.getElementById('transferAmount').value = '';
             document.getElementById('toAccount').value = '';
             
+            loadTransactionHistory();
+            
             const toAccountName = data.toAccountName || toAccount;
             showMessage(`Transfer of $${amount.toFixed(2)} to ${toAccountName} successful!`);
         } else {
@@ -323,6 +362,90 @@
                 }
             } catch (error) {
                 showMessage('Network error during balance check', 'error');
+            }
+        }
+
+        async function loadTransactionHistory() {
+            const accountType = document.getElementById('filterAccount').value;
+            const startDate = document.getElementById('filterStartDate').value;
+            const endDate = document.getElementById('filterEndDate').value;
+            
+            let url = '/transactions?';
+            if (accountType) url += `accountType=${accountType}&`;
+            if (startDate) url += `startDate=${startDate}&`;
+            if (endDate) url += `endDate=${endDate}&`;
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'X-Session-Id': sessionId
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const container = document.getElementById('transactionHistoryContainer');
+                    
+                    if (data.transactions.length === 0) {
+                        container.innerHTML = '<p style="text-align: center; color: #6c757d; padding: 20px;">No transactions found.</p>';
+                        return;
+                    }
+                    
+                    const accountEmojis = {
+                        'checking': '🏦',
+                        'savings': '💰',
+                        'investments': '📈',
+                        'emergency': '🚨'
+                    };
+                    
+                    const accountNames = {
+                        'checking': 'Checking',
+                        'savings': 'Savings',
+                        'investments': 'Investments',
+                        'emergency': 'Emergency'
+                    };
+                    
+                    let tableHTML = `
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                            <thead>
+                                <tr style="background-color: #e9ecef; text-align: left;">
+                                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Date</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">From</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">To</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: right;">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    data.transactions.forEach(txn => {
+                        const date = new Date(txn.timestamp).toLocaleString();
+                        const fromAccount = `${accountEmojis[txn.from]} ${accountNames[txn.from]}`;
+                        const toAccount = `${accountEmojis[txn.to]} ${accountNames[txn.to]}`;
+                        
+                        tableHTML += `
+                            <tr style="border-bottom: 1px solid #dee2e6;">
+                                <td style="padding: 10px;">${date}</td>
+                                <td style="padding: 10px;">${fromAccount}</td>
+                                <td style="padding: 10px;">${toAccount}</td>
+                                <td style="padding: 10px; text-align: right; font-weight: bold; color: #28a745;">$${txn.amount.toFixed(2)}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tableHTML += `
+                            </tbody>
+                        </table>
+                    `;
+                    
+                    container.innerHTML = tableHTML;
+                    showMessage(`Loaded ${data.transactions.length} transaction(s)`);
+                } else {
+                    showMessage(data.error || 'Failed to load transactions', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error loading transactions', 'error');
             }
         }
 

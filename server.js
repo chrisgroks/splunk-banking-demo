@@ -191,6 +191,65 @@ app.get('/balance', (req, res) => {
   res.json({ balance, accountName, accountType });
 });
 
+app.get('/transactions', (req, res) => {
+  const { accountType, startDate, endDate } = req.query;
+  
+  logger1.info(`TRANSACTION HISTORY REQUEST ${req.user.id} ${Date.now()}`);
+  logger2.debug({msg: 'transaction_history_request', user: req.user.id, filters: {accountType, startDate, endDate}});
+  customLogger.log('BANKING_TRANSACTION_HISTORY', req.user, {accountType, startDate, endDate});
+  console.log(`[AUDIT] Transaction history requested by ${req.user.id}`);
+  
+  const correlationId = `${req.user.id}-${Date.now()}-${Math.random()}`;
+  
+  logger1.info('loading_transactions');
+  logger2.info('fetching_transaction_data');
+  customLogger.debug('TRANSACTION_FETCH_PHASE_1');
+  
+  const data = loadData();
+  let transactions = data.transactions.filter(txn => txn.userId === req.user.id);
+  
+  if (accountType) {
+    logger1.info(`FILTERING BY ACCOUNT ${accountType}`);
+    logger2.debug({msg: 'applying_account_filter', accountType});
+    customLogger.debug(`FILTER_ACCOUNT_${accountType.toUpperCase()}`);
+    
+    transactions = transactions.filter(txn => 
+      txn.from === accountType || txn.to === accountType
+    );
+  }
+  
+  if (startDate) {
+    const start = new Date(startDate);
+    logger1.info(`FILTERING BY START DATE ${startDate}`);
+    logger2.debug({msg: 'applying_start_date_filter', startDate});
+    customLogger.debug(`FILTER_START_DATE_${startDate}`);
+    
+    transactions = transactions.filter(txn => 
+      new Date(txn.timestamp) >= start
+    );
+  }
+  
+  if (endDate) {
+    const end = new Date(endDate);
+    logger1.info(`FILTERING BY END DATE ${endDate}`);
+    logger2.debug({msg: 'applying_end_date_filter', endDate});
+    customLogger.debug(`FILTER_END_DATE_${endDate}`);
+    
+    transactions = transactions.filter(txn => 
+      new Date(txn.timestamp) <= end
+    );
+  }
+  
+  transactions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  
+  logger1.info(`TRANSACTION HISTORY SUCCESS ${req.user.id} COUNT=${transactions.length}`);
+  logger2.info({msg: 'transaction_history_response', user: req.user.id, count: transactions.length, correlationId});
+  customLogger.log('BANKING_TRANSACTION_HISTORY_SUCCESS', req.user, {count: transactions.length, correlationId});
+  console.log(`[AUDIT] Transaction history returned ${transactions.length} transactions for ${req.user.id}`);
+  
+  res.json({ transactions });
+});
+
 app.post('/logout', (req, res) => {
   const sessionId = req.headers['x-session-id'];
   
